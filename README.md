@@ -75,6 +75,73 @@ Telegram: [https://t.me/dujiaoka](https://t.me/dujiaoka)
 - [各支付对应后台配置](https://github.com/assimon/dujiaoka/wiki/problems#各支付对应配置)
 - [视频教程及工具集合](https://pan.dujiaoka.com)
 
+### 🐳 Docker 快速部署（推荐）
+
+本仓库已集成 MySQL、Redis 和自动数据库初始化，支持一键部署！
+
+#### 前置要求
+- Docker
+- Docker Compose
+
+#### 部署步骤
+
+1. **克隆仓库**
+```bash
+git clone https://github.com/moonjoke001/dujiaoka.git
+cd dujiaoka
+```
+
+2. **配置环境变量**
+
+编辑 `.env` 文件，修改以下关键配置：
+```bash
+APP_URL=http://你的域名或IP
+DATA_DIR=/root  # 数据存储目录
+```
+
+3. **一键启动**
+```bash
+docker-compose up -d
+```
+
+启动后会自动完成：
+- ✅ MySQL 数据库初始化
+- ✅ Redis 缓存服务启动
+- ✅ 数据库表自动导入
+- ✅ Web 服务启动
+
+4. **访问系统**
+- 前台：`http://你的IP`
+- 后台：`http://你的IP/admin`
+- 默认账号：`admin` / `admin`
+
+#### 查看日志
+```bash
+# 查看数据库初始化日志
+docker logs dujiaoka-db-init
+
+# 查看应用日志
+docker logs -f dujiaoka
+```
+
+#### 服务管理
+```bash
+# 停止服务
+docker-compose down
+
+# 重启服务
+docker-compose restart
+
+# 查看服务状态
+docker-compose ps
+```
+
+#### 特性
+- 🚀 **自动化部署**：无需手动配置数据库
+- 🔄 **健康检查**：确保服务按正确顺序启动
+- 💾 **数据持久化**：数据存储在宿主机，容器重建不丢失
+- 🛡️ **幂等性**：重复启动不会重复初始化数据库
+
 ## 支付接口已集成
 - [x] 支付宝当面付
 - [x] 支付宝PC支付
