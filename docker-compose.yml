@@ -16,5 +16,64 @@ services:
     environment:
       WEB_DOCUMENT_ROOT: "/app/public"
       TZ: Asia/Shanghai
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      db-init:
+        condition: service_completed_successfully
     tty: true
     restart: always
+
+  mysql:
+    image: mysql:5.7
+    container_name: dujiaoka-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_DATABASE: dujiaoka
+      MYSQL_USER: dujiaoka
+      MYSQL_PASSWORD: dujiaoka123
+      TZ: Asia/Shanghai
+    volumes:
+      - ${DATA_DIR}/mysql:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot123456"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: always
+
+  redis:
+    image: redis:6-alpine
+    container_name: dujiaoka-redis
+    volumes:
+      - ${DATA_DIR}/redis:/data
+    ports:
+      - "6379:6379"
+    restart: always
+
+  db-init:
+    image: mysql:5.7
+    container_name: dujiaoka-db-init
+    volumes:
+      - ${DATA_DIR}/dujiaoka/database/sql/install.sql:/install.sql:ro
+    environment:
+      TZ: Asia/Shanghai
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: >
+      bash -c "
+      TABLE_COUNT=$$(mysql -h mysql -u dujiaoka -pdujiaoka123 -D dujiaoka -se 'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = \"dujiaoka\";' 2>/dev/null || echo 0);
+      if [ \"$$TABLE_COUNT\" -eq \"0\" ]; then
+        echo '数据库为空，开始导入 SQL 文件...';
+        mysql -h mysql -u dujiaoka -pdujiaoka123 dujiaoka < /install.sql;
+        echo '数据库导入完成！';
+      else
+        echo '数据库已存在表，跳过初始化';
+      fi
+      "
+    restart: "no"
